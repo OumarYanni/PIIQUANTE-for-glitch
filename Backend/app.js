@@ -3,10 +3,13 @@ const app = express();
 
 const mongoose = require('mongoose');
 //Chemin d'acces
-const path = require('path');
+//const path = require('path');
 
 //Importation du router user
 const userRoutes = require('./routes/user');
+
+//importation dans app.js pour accéder au path de notre serveur
+const path = require('path');
 
 //Importation du modèle "user"
 // const userThing = require('./models/user');
@@ -50,5 +53,7 @@ app.use(express.json());
 //Importation des routes users et sauces
 // app.use('/api/stuff', stuffRoutes);
 app.use('/api/auth', userRoutes);
+// Cela indique à Express qu'il faut gérer la ressource images de manière statique (un sous-répertoire de notre répertoire de base, __dirname) à chaque fois qu'elle reçoit une requête vers la route /images.
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 module.exports = app;

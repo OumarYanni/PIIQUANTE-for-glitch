@@ -1,6 +1,7 @@
 //Importation du multer un package qui nous permet de gérer les fichiers entrants dans les requêtes HTTP.
 const multer = require('multer');
 
+//Dictionnaire (objet) qui définit les différentes extensions d'images prises en charge
 const MIME_TYPES = {
   'image/jpg': 'jpg',
   'image/jpeg': 'jpg',
