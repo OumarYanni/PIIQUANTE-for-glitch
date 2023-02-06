@@ -2,11 +2,15 @@ const express = require('express');
 const app = express();
 
 const mongoose = require('mongoose');
-//Chemin d'acces
-//const path = require('path');
+//Sécurité
+//On importe helmet" qui est un module Node.js qui permet de renforcer la sécurité de l'application en définissant différents en-têtes HTTP pour les réponses HTTP.
+const helmet = require('helmet');
+
+
 
 //Importation du router user
 const userRoutes = require('./routes/user');
+const sauceRoutes = require('./routes/sauce');
 
 //importation dans app.js pour accéder au path de notre serveur
 const path = require('path');
@@ -50,9 +54,10 @@ app.use(express.json());
 //       .catch(error => res.status(400).json({ error }));
 //   });
 
-//Importation des routes users et sauces
+//Importation des routes user et sauces
 // app.use('/api/stuff', stuffRoutes);
 app.use('/api/auth', userRoutes);
+app.use('/api/sauces', sauceRoutes);
 // Cela indique à Express qu'il faut gérer la ressource images de manière statique (un sous-répertoire de notre répertoire de base, __dirname) à chaque fois qu'elle reçoit une requête vers la route /images.
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
