@@ -6,6 +6,12 @@ const mongoose = require('mongoose');
 //On importe helmet" qui est un module Node.js qui permet de renforcer la sécurité de l'application en définissant différents en-têtes HTTP pour les réponses HTTP.
 const helmet = require('helmet');
 
+//Importation de la librairie dotenv et de configurer les variables d'environnement définies dans un fichier .env. Les variables d'environnement sont des informations sensibles telles que les mots de passe, les clés API, etc. qui ne doivent pas être partagées publiquement. La librairie dotenv les charge dans l'environnement Node.js et peut les utiliser dans le code en utilisant process.env.
+const dotenv = require("dotenv").config();
+
+//La constante passwordValidator est une instance du package express-validator qui est un middleware pour la validation de données dans Express.js. Il vérifie si les données envoyées dans une requête HTTP sont valides selon les règles de validation spécifiées. Par exemple, si une validation de mots de passe est requise, passwordValidator pourrait être utilisé pour vérifier si le mot de passe respecte les critères tels que la longueur minimale, la présence de caractères spéciaux, etc. Cela aide à garantir la sécurité des données en s'assurant que les entrées utilisateur sont valides avant de les traiter sur le serveur.
+const passwordValidator = require('password-validator');
+
 
 
 //Importation du router user
@@ -19,11 +25,12 @@ const path = require('path');
 // const userThing = require('./models/user');
 
 //Connexion à MongoDB
-mongoose.connect('mongodb+srv://OumarYanni:RN0mDjLHEEWYLpg0@cluster0-piiquante.5cgwwky.mongodb.net/HotTakes?retryWrites=true&w=majority',
-  { useNewUrlParser: true,
-    useUnifiedTopology: true })
-  .then(() => console.log('Connexion à MongoDB réussie !'))
-  .catch(() => console.log('Connexion à MongoDB échouée !'));
+mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.HOST}/${process.env.DB_NAME}?retryWrites=true&w=majority`,
+    { useNewUrlParser: true,
+      useUnifiedTopology: true })
+    .then(() => console.log('Connexion à MongoDB réussie !'))
+    .catch(() => console.log('Connexion à MongoDB échouée !'));
+  
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -34,31 +41,45 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Route Post : Ici, on crée une instance du modèle userThing en lui passant un objet JavaScript contenant toutes les informations requises du corps de requête analysé (en ayant supprimé en amont le faux_id envoyé par le front-end).
-// app.post('/api/auth/signup', (req, res, next) => {
-//   delete req.body._id;
-//   const userThing = new userThing({
-//     ...req.body
-//   });
-//   //Ce modèle comporte une méthode save() qui enregistre simplement le Thing dans la base de données.
-//   //La méthode save() renvoie une Promise. Ainsi, dans notre bloc then() , nous renverrons une réponse de réussite avec un code 201 de réussite. Dans notre bloc catch() , nous renverrons une réponse avec l'erreur générée par Mongoose ainsi qu'un code d'erreur 400.
-//   userThing.save()
-//     .then(() => res.status(201).json({ message: 'Objet enregistré !'}))
-//     .catch(error => res.status(400).json({ error }));
-// });
+// Cela indique à Express qu'il faut gérer la ressource images de manière statique (un sous-répertoire de notre répertoire de base, __dirname) à chaque fois qu'elle reçoit une requête vers la route /images.
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// //récupération de la liste de "things" en vente
-// app.get('/api/stuff', (req, res, next) => {
-//     Thing.find()
-//       .then(things => res.status(200).json(things))
-//       .catch(error => res.status(400).json({ error }));
-//   });
+// Ajout de la sécurité contre les attaques XSS
+app.use(helmet());
+// app.use(helmet({
+//     // Seules les demandes provenant du même site peuvent lire la ressource
+//     // crossOriginResourcePolicy: { policy: "same-site" },
+//     })
+// );
+
+//Création d'un schéma pour la validation du mot de passe
+const schema = new passwordValidator();
+
+//Définition des règles pour la validation du mot de passe
+schema
+  .is().min(8)                                    // Longueur minimale du mot de passe
+  .is().max(100)                                  // Longueur maximale du mot de passe
+  .has().uppercase()                              // Au moins une majuscule
+  .has().lowercase()                              // Au moins une minuscule
+  .has().digits()                                 // Au moins un chiffre
+  .has().symbols()                                // Au moins un symbole
+  .has().not().spaces();                         // Pas d'espace
+
+  //Middleware pour la validation du mot de passe
+const validatePassword = (req, res, next) => {
+    const { password } = req.body;
+    
+    if (!schema.validate(password)) {
+      return res.status(400).json({ error: 'Mot de passe non valide' });
+    }
+    next();
+  };
+app.use('/api/auth/signup', validatePassword); 
 
 //Importation des routes user et sauces
 // app.use('/api/stuff', stuffRoutes);
 app.use('/api/auth', userRoutes);
 app.use('/api/sauces', sauceRoutes);
-// Cela indique à Express qu'il faut gérer la ressource images de manière statique (un sous-répertoire de notre répertoire de base, __dirname) à chaque fois qu'elle reçoit une requête vers la route /images.
-app.use('/images', express.static(path.join(__dirname, 'images')));
+
 
 module.exports = app;
