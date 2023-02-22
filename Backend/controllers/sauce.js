@@ -78,8 +78,8 @@ exports.likesManagement = (req, res, next) => {
 
   //Supprimier le like ou le dislike
   // Like === 0
-   // Si like est égal à 0
-   if (like === 0) {
+  // Si like est égal à 0
+  if (like === 0) {
     Sauce.findOne({
       _id: sauceId,
     })
@@ -112,7 +112,6 @@ exports.likesManagement = (req, res, next) => {
       .catch((error) => res.status(400).json({ error }));
   }
 };
-
 
 // Controleur pour l'affichage de toutes les sauces
 exports.getAllSauces = (req, res, next) => {
