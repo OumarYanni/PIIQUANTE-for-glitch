@@ -36,54 +36,68 @@ exports.createSauce = (req, res, next) => {
 // Controlleur pour gérer les likes et dislikes
 exports.likesManagement = (req, res, next) => {
   // Récupération de l'identifiant de l'utilisateur à partir de la requête
-  const userId = req.body.userId;
+  const userId = req.auth.userId;
+
+  if (!userId) {
+    res.status(403).json({ message: "Requête non autorisée!" });
+  }
   // Récupération de l'identifiant de la sauce à partir des paramètres de la requête
   const sauceId = req.params.id;
   // Récupération de l'information sur le like de l'utilisateur à partir du corps de la requête
   const like = req.body.like;
   // Si l'utilisateur clique sur le pouce "j'aime"
-  if (like === 1) {
-    // Mise à jour de la sauce avec l'identifiant sauceId
-    Sauce.updateOne(
-      { _id: sauceId },
-      {
-        // Opérateur "push" de MongoDB pour ajouter l'identifiant de l'utilisateur au tableau usersLiked
-        $push: { usersLiked: userId },
-        // Opérateur "increment" de MongoDB pour incrémenter le nombre de likes
-        $inc: { likes: +1 },
+  Sauce.findOne({
+    _id: sauceId,
+  })
+    .then((sauce) => {
+      if (like === 1) {
+        if (
+          !sauce.usersLiked.includes(userId) &&
+          !sauce.usersDisliked.includes(userId)
+        ) {
+          // Mise à jour de la sauce avec l'identifiant sauceId
+          Sauce.updateOne(
+            { _id: sauceId },
+            {
+              // Opérateur "push" de MongoDB pour ajouter l'identifiant de l'utilisateur au tableau usersLiked
+              $push: { usersLiked: userId },
+              // Opérateur "increment" de MongoDB pour incrémenter le nombre de likes
+              $inc: { likes: +1 },
+            }
+          )
+            // En cas de réussite, renvoi d'un message de réussite
+            .then(() => res.status(200).json({ message: "Like ajouté !" }))
+            // En cas d'erreur, renvoi de l'erreur
+            .catch((error) => res.status(400).json({ error }));
+        }
       }
-    )
-      // En cas de réussite, renvoi d'un message de réussite
-      .then(() => res.status(200).json({ message: "Like ajouté !" }))
-      // En cas d'erreur, renvoi de l'erreur
-      .catch((error) => res.status(400).json({ error }));
-  }
-  // Si l'utilisateur clique sur le pouce "je n'aime pas"
-  if (like === -1) {
-    // Mise à jour de la sauce avec l'identifiant sauceId
-    Sauce.updateOne(
-      { _id: sauceId },
-      {
-        // Opérateur "push" de MongoDB pour ajouter l'identifiant de l'utilisateur au tableau usersDisliked
-        $push: { usersDisliked: userId },
-        // Opérateur "increment" de MongoDB pour incrémenter le nombre de dislikes
-        $inc: { dislikes: +1 },
+      // Si l'utilisateur clique sur le pouce "je n'aime pas"
+      if (like === -1) {
+        if (
+          !sauce.usersLiked.includes(userId) &&
+          !sauce.usersDisliked.includes(userId)
+        ) {
+          // Mise à jour de la sauce avec l'identifiant sauceId
+          Sauce.updateOne(
+            { _id: sauceId },
+            {
+              // Opérateur "push" de MongoDB pour ajouter l'identifiant de l'utilisateur au tableau usersDisliked
+              $push: { usersDisliked: userId },
+              // Opérateur "increment" de MongoDB pour incrémenter le nombre de dislikes
+              $inc: { dislikes: +1 },
+            }
+          )
+            // En cas de réussite, renvoi d'un message de réussite
+            .then(() => res.status(200).json({ message: "Dislike ajouté !" }))
+            // En cas d'erreur, renvoi de l'erreur
+            .catch((error) => res.status(400).json({ error }));
+        }
       }
-    )
-      // En cas de réussite, renvoi d'un message de réussite
-      .then(() => res.status(200).json({ message: "Dislike ajouté !" }))
-      // En cas d'erreur, renvoi de l'erreur
-      .catch((error) => res.status(400).json({ error }));
-  }
 
-  //Supprimier le like ou le dislike
-  // Like === 0
-  // Si like est égal à 0
-  if (like === 0) {
-    Sauce.findOne({
-      _id: sauceId,
-    })
-      .then((sauce) => {
+      //Supprimier le like ou le dislike
+      // Like === 0
+      // Si like est égal à 0
+      if (like === 0) {
         // Suppression du like
         // Si l'utilisateur a déjà cliqué sur le pouce like, c'est-à-dire si l'userId est inclus dans le tableau des usersLiked
         if (sauce.usersLiked.includes(userId)) {
@@ -108,9 +122,9 @@ exports.likesManagement = (req, res, next) => {
             .then(() => res.status(200).json({ message: "Dislike retiré !" }))
             .catch((error) => res.status(400).json({ error }));
         }
-      })
-      .catch((error) => res.status(400).json({ error }));
-  }
+      }
+    })
+    .catch((error) => res.status(400).json({ error }));
 };
 
 // Controleur pour l'affichage de toutes les sauces

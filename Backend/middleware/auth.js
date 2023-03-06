@@ -15,6 +15,7 @@ module.exports = (req, res, next) => {
     req.auth = {
       userId: userId,
     };
+
     //Dans le cas contraire, tout fonctionne et notre utilisateur est authentifié. Nous passons à l'exécution à l'aide de la fonction next().
     next();
   } catch (error) {
