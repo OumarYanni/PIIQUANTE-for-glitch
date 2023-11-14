@@ -59,4 +59,18 @@ app.use(helmet());
 app.use("/api/auth", userRoutes);
 app.use("/api/sauces", sauceRoutes);
 
+//Route pour servir index.html
+/*app.get('/index.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Frontend', 'src', 'index.html'));
+});*/
+
+// Après toutes les autres routes et middleware
+app.use(express.static(path.join(__dirname, '../Frontend/dist/hot-takes')));
+
+// Redirige toutes les autres requêtes vers le fichier index.html du Frontend
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../Frontend/dist/hot-takes/index.html'));
+});
+
+
 module.exports = app;
